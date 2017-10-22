@@ -17,6 +17,7 @@ public partial class ModuleWeaver
             LogInfo($"{methodDefinition.Name} has no body or instructions.");
             return;
         }
+
         methodDefinition.Body.SimplifyMacros();
 
         if (methodDefinition.ReturnType.FullName.StartsWith("System.Threading.Tasks.Task", StringComparison.Ordinal))
@@ -42,7 +43,8 @@ public partial class ModuleWeaver
         if (asyncStateMachine != null)
         {
             var asyncType = asyncStateMachine.ConstructorArguments[0].Value as TypeReference;
-            var asyncTypeMethod = asyncType.Resolve().Methods.Get("MoveNext");
+            var asyncTypeDefinition = asyncType.Resolve();
+            var asyncTypeMethod = asyncTypeDefinition.Methods.Get("MoveNext");
 
             if (asyncTypeMethod == null)
             {
@@ -50,53 +52,42 @@ public partial class ModuleWeaver
                 return;
             }
 
-            var instructions = asyncTypeMethod.Body.Instructions;
-            for (var index = 0; index < instructions.Count; index++)
+            var methodBodyFirstInstruction = GetMethodFirstInstruction(asyncTypeMethod);
+            var methodBodyReturnInstruction = asyncTypeMethod.Body.Instructions.FirstOrDefault(x => x.OpCode == OpCodes.Ret);
+            var tryCatchLeaveInstructions = GetTryCatchLeaveInstructions(methodBodyReturnInstruction);
+
+            var stateField = asyncTypeDefinition.Fields.FirstOrDefault(x => x.FieldType == ModuleDefinition.TypeSystem.Int32);
+            var thisField = asyncTypeDefinition.Fields.FirstOrDefault(x => x.FieldType == node.TypeDefinition);
+            var nopInstruction = Instruction.Create(OpCodes.Nop);
+            // We need to check on state to avoid changing state when not execution isn't finished
+            var finalInstructions = new List<Instruction>()
             {
-                var line = instructions[index];
-                if (line.OpCode != OpCodes.Call)
-                {
-                    continue;
-                }
-                var methodReference = line.Operand as MethodReference;
-                if (methodReference == null)
-                {
-                    continue;
-                }
+                Instruction.Create(OpCodes.Ldarg_0),
+                Instruction.Create(OpCodes.Ldfld, stateField),
+                Instruction.Create(OpCodes.Stloc_0),
+                Instruction.Create(OpCodes.Ldloc_0),
+                Instruction.Create(OpCodes.Brfalse_S, nopInstruction)
+            };
+            finalInstructions.AddRange(GetSetterStateInstructions(node, 0, thisField));
+            finalInstructions.Add(Instruction.Create(OpCodes.Endfinally));
 
-                if (IsSetExceptionMethod(methodReference) ||
-                    IsSetResultMethod(methodReference))
-                {
-                    //var previous = instructions[index - 1];
-                    var setInstructions = GetSetterStateInstructions(node, 0);
-                    foreach (var setInstruction in setInstructions)
-                    {
-                        instructions.Insert(index + 1, setInstruction);
-                        index++;
-                    }
-                }
-            }
+            var processor = asyncTypeMethod.Body.GetILProcessor();
+            processor.InsertBefore(methodBodyFirstInstruction, GetSetterStateInstructions(node, 1, thisField));
+            processor.InsertBefore(methodBodyReturnInstruction, tryCatchLeaveInstructions);
+            processor.InsertBefore(methodBodyReturnInstruction, finalInstructions);
+            processor.InsertBefore(methodBodyReturnInstruction, nopInstruction);
+
+            var handler = new ExceptionHandler(ExceptionHandlerType.Finally)
+            {
+                TryStart = methodBodyFirstInstruction,
+                TryEnd = tryCatchLeaveInstructions.Last().Next,
+                HandlerStart = finalInstructions.First(),
+                HandlerEnd = finalInstructions.Last().Next
+            };
+
+            asyncTypeMethod.Body.ExceptionHandlers.Add(handler);
+            asyncTypeMethod.Body.InitLocals = true;
         }
-
-        // set state at start of method
-        var methodBodyFirstInstruction = GetMethodFirstInstruction(node.MethodDefinition);
-
-        var processor = node.MethodDefinition.Body.GetILProcessor();
-        processor.InsertBefore(methodBodyFirstInstruction, GetSetterStateInstructions(node, 1));
-    }
-
-    bool IsSetExceptionMethod(MethodReference methodReference)
-    {
-        return
-            methodReference.Name == "SetException" &&
-            methodReference.DeclaringType.FullName.StartsWith("System.Runtime.CompilerServices.AsyncTaskMethodBuilder", StringComparison.Ordinal);
-    }
-
-    bool IsSetResultMethod(MethodReference methodReference)
-    {
-        return
-            methodReference.Name == "SetResult" &&
-            methodReference.DeclaringType.FullName.StartsWith("System.Runtime.CompilerServices.AsyncTaskMethodBuilder", StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -119,7 +110,7 @@ public partial class ModuleWeaver
         var saveRetvalInstructions = GetSaveRetvalInstructions(processor, retvalVariableDefinition);
         var methodBodyReturnInstructions = GetMethodBodyReturnInstructions(processor, retvalVariableDefinition);
         var methodBodyReturnInstruction = methodBodyReturnInstructions.First();
-        var tryCatchLeaveInstructions = GetTryCatchLeaveInstructions(processor, methodBodyReturnInstruction);
+        var tryCatchLeaveInstructions = GetTryCatchLeaveInstructions(methodBodyReturnInstruction);
         var finallyInstructions = GetSetterStateInstructions(node, 0);
         finallyInstructions.Add(processor.Create(OpCodes.Endfinally));
 
@@ -181,18 +172,22 @@ public partial class ModuleWeaver
             new Instruction[0] : new[] { processor.Create(OpCodes.Stloc_S, retvalVariableDefinition) };
     }
 
-    IList<Instruction> GetTryCatchLeaveInstructions(ILProcessor processor, Instruction methodBodyReturnInstruction)
+    IList<Instruction> GetTryCatchLeaveInstructions(Instruction methodBodyReturnInstruction)
     {
         return new[] { Instruction.Create(OpCodes.Leave_S, methodBodyReturnInstruction) };
     }
 
-    List<Instruction> GetSetterStateInstructions(MethodNode methodNode, int value)
+    List<Instruction> GetSetterStateInstructions(MethodNode methodNode, int value, FieldDefinition targetField = null)
     {
         var setterList = new List<Instruction>
         {
-            Instruction.Create(OpCodes.Ldarg_0),
-            Instruction.Create(OpCodes.Ldc_I4, value)
+            Instruction.Create(OpCodes.Ldarg_0)
         };
+        if (targetField != null)
+        {
+            setterList.Add(Instruction.Create(OpCodes.Ldfld, targetField));
+        }
+        setterList.Add(Instruction.Create(OpCodes.Ldc_I4, value));
         if (methodNode.PropertyReference != null)
         {
             setterList.Add(Instruction.Create(OpCodes.Call, methodNode.PropertyReference));

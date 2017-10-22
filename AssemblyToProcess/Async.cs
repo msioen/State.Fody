@@ -10,6 +10,8 @@ namespace AssemblyToProcess
 
         public bool IsLoading { get; set; }
 
+        public bool IsLoading2 { get; set; }
+
         [AddState("_isSyncing")]
         public Task TestField()
         {
@@ -39,6 +41,17 @@ namespace AssemblyToProcess
             await Task.Delay(100);
             Console.WriteLine("TestAsync3");
             return input;
+        }
+
+        [AddState("IsLoading")]
+        public async Task TestAsync4()
+        {
+            IsLoading2 = true;
+
+            await Task.Delay(100);
+            Console.WriteLine("TestAsync1");
+
+            IsLoading2 = false;
         }
     }
 }
