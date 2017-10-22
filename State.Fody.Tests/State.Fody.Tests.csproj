@@ -116,8 +116,7 @@
       <Name>State.Fody</Name>
     </ProjectReference>
     <ProjectReference Include="..\AssemblyToProcess\AssemblyToProcess.csproj">
-      <Project>{2BCA2437-92FA-4042-B523-CB63288E4D26}</Project>
-      <Name>AssemblyToProcess</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

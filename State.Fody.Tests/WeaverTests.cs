@@ -16,7 +16,7 @@ namespace State.Fody.Tests
         [OneTimeSetUp]
         public void Setup()
         {
-            var projectPath = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, @"..\..\..\AssemblyToProcess\AssemblyToProcess.csproj"));
+            var projectPath = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, @"../../../AssemblyToProcess/bin/Debug/"));
             assemblyPath = Path.Combine(Path.GetDirectoryName(projectPath), @"AssemblyToProcess.dll");
 #if (!DEBUG)
         assemblyPath = assemblyPath.Replace("Debug", "Release");
@@ -34,7 +34,7 @@ namespace State.Fody.Tests
 
                 weavingTask.LogDebug = Log;
                 weavingTask.LogInfo = Log;
-                weavingTask.LogWarning = Log;
+                weavingTask.LogError = Log;
 
                 weavingTask.Execute();
                 moduleDefinition.Write(newAssemblyPath);

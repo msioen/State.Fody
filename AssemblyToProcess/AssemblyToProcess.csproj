@@ -30,8 +30,14 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="TestClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Untouched.cs" />
+    <Compile Include="Generic.cs" />
+    <Compile Include="Inheritance.cs" />
+    <Compile Include="Async.cs" />
+    <Compile Include="Default.cs" />
+    <Compile Include="PrivateProperty.cs" />
+    <Compile Include="PropertyWithoutSetter.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\State.Fody\State.Fody.csproj">
