@@ -20,9 +20,10 @@ public partial class ModuleWeaver
 
         methodDefinition.Body.SimplifyMacros();
 
-        if (methodDefinition.ReturnType.FullName.StartsWith("System.Threading.Tasks.Task", StringComparison.Ordinal))
+        var asyncStateMachine = node.MethodDefinition.CustomAttributes.Get("System.Runtime.CompilerServices.AsyncStateMachineAttribute");
+        if (asyncStateMachine != null)
         {
-            AddStateToAsyncMethod(node);
+            AddStateToAsyncMethod(node, asyncStateMachine);
         }
         else
         {
@@ -36,58 +37,53 @@ public partial class ModuleWeaver
     /// asynchronous methods update state on start, on result and on error
     /// </summary>
     /// <param name="methodDefinition">Method definition.</param>
-    void AddStateToAsyncMethod(MethodNode node)
+    void AddStateToAsyncMethod(MethodNode node, CustomAttribute asyncStateMachine)
     {
-        // update state when statemachine finishes
-        var asyncStateMachine = node.MethodDefinition.CustomAttributes.Get("System.Runtime.CompilerServices.AsyncStateMachineAttribute");
-        if (asyncStateMachine != null)
+        var asyncType = asyncStateMachine.ConstructorArguments[0].Value as TypeReference;
+        var asyncTypeDefinition = asyncType.Resolve();
+        var asyncTypeMethod = asyncTypeDefinition.Methods.Get("MoveNext");
+
+        if (asyncTypeMethod == null)
         {
-            var asyncType = asyncStateMachine.ConstructorArguments[0].Value as TypeReference;
-            var asyncTypeDefinition = asyncType.Resolve();
-            var asyncTypeMethod = asyncTypeDefinition.Methods.Get("MoveNext");
-
-            if (asyncTypeMethod == null)
-            {
-                LogError($"Unable to find the method MoveNext of async method {node.MethodDefinition.Name}");
-                return;
-            }
-
-            var methodBodyFirstInstruction = GetMethodFirstInstruction(asyncTypeMethod);
-            var methodBodyReturnInstruction = asyncTypeMethod.Body.Instructions.FirstOrDefault(x => x.OpCode == OpCodes.Ret);
-            var tryCatchLeaveInstructions = GetTryCatchLeaveInstructions(methodBodyReturnInstruction);
-
-            var stateField = asyncTypeDefinition.Fields.FirstOrDefault(x => x.FieldType == ModuleDefinition.TypeSystem.Int32);
-            var thisField = asyncTypeDefinition.Fields.FirstOrDefault(x => x.FieldType == node.TypeDefinition);
-            var nopInstruction = Instruction.Create(OpCodes.Nop);
-            // We need to check on state to avoid changing state when not execution isn't finished
-            var finalInstructions = new List<Instruction>()
-            {
-                Instruction.Create(OpCodes.Ldarg_0),
-                Instruction.Create(OpCodes.Ldfld, stateField),
-                Instruction.Create(OpCodes.Stloc_0),
-                Instruction.Create(OpCodes.Ldloc_0),
-                Instruction.Create(OpCodes.Brfalse_S, nopInstruction)
-            };
-            finalInstructions.AddRange(GetSetterStateInstructions(node, 0, thisField));
-            finalInstructions.Add(Instruction.Create(OpCodes.Endfinally));
-
-            var processor = asyncTypeMethod.Body.GetILProcessor();
-            processor.InsertBefore(methodBodyFirstInstruction, GetSetterStateInstructions(node, 1, thisField));
-            processor.InsertBefore(methodBodyReturnInstruction, tryCatchLeaveInstructions);
-            processor.InsertBefore(methodBodyReturnInstruction, finalInstructions);
-            processor.InsertBefore(methodBodyReturnInstruction, nopInstruction);
-
-            var handler = new ExceptionHandler(ExceptionHandlerType.Finally)
-            {
-                TryStart = methodBodyFirstInstruction,
-                TryEnd = tryCatchLeaveInstructions.Last().Next,
-                HandlerStart = finalInstructions.First(),
-                HandlerEnd = finalInstructions.Last().Next
-            };
-
-            asyncTypeMethod.Body.ExceptionHandlers.Add(handler);
-            asyncTypeMethod.Body.InitLocals = true;
+            LogError($"Unable to find the method MoveNext of async method {node.MethodDefinition.Name}");
+            return;
         }
+
+        var methodBodyFirstInstruction = GetMethodFirstInstruction(asyncTypeMethod);
+        var methodBodyReturnInstruction = asyncTypeMethod.Body.Instructions.FirstOrDefault(x => x.OpCode == OpCodes.Ret);
+        var tryCatchLeaveInstructions = GetTryCatchLeaveInstructions(methodBodyReturnInstruction);
+
+        var stateField = asyncTypeDefinition.Fields.FirstOrDefault(x => x.FieldType == ModuleDefinition.TypeSystem.Int32);
+        var thisField = asyncTypeDefinition.Fields.FirstOrDefault(x => x.FieldType == node.TypeDefinition);
+        var nopInstruction = Instruction.Create(OpCodes.Nop);
+        // We need to check on state to avoid changing state when execution isn't finished
+        var finalInstructions = new List<Instruction>()
+        {
+            Instruction.Create(OpCodes.Ldarg_0),
+            Instruction.Create(OpCodes.Ldfld, stateField),
+            Instruction.Create(OpCodes.Stloc_0),
+            Instruction.Create(OpCodes.Ldloc_0),
+            Instruction.Create(OpCodes.Brfalse_S, nopInstruction)
+        };
+        finalInstructions.AddRange(GetSetterStateInstructions(node, 0, thisField));
+        finalInstructions.Add(Instruction.Create(OpCodes.Endfinally));
+
+        var processor = asyncTypeMethod.Body.GetILProcessor();
+        processor.InsertBefore(methodBodyFirstInstruction, GetSetterStateInstructions(node, 1, thisField));
+        processor.InsertBefore(methodBodyReturnInstruction, tryCatchLeaveInstructions);
+        processor.InsertBefore(methodBodyReturnInstruction, finalInstructions);
+        processor.InsertBefore(methodBodyReturnInstruction, nopInstruction);
+
+        var handler = new ExceptionHandler(ExceptionHandlerType.Finally)
+        {
+            TryStart = methodBodyFirstInstruction,
+            TryEnd = tryCatchLeaveInstructions.Last().Next,
+            HandlerStart = finalInstructions.First(),
+            HandlerEnd = finalInstructions.Last().Next
+        };
+
+        asyncTypeMethod.Body.ExceptionHandlers.Add(handler);
+        asyncTypeMethod.Body.InitLocals = true;
     }
 
     /// <summary>
