@@ -38,6 +38,7 @@
     <Compile Include="Default.cs" />
     <Compile Include="PrivateProperty.cs" />
     <Compile Include="PropertyWithoutSetter.cs" />
+    <Compile Include="ExistingClauses.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\State.Fody\State.Fody.csproj">

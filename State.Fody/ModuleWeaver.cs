@@ -23,9 +23,10 @@ public partial class ModuleWeaver
 
     public void Execute()
     {
-        // find methods with AddState attribute
-
         BuildMethodNodes();
+        TrimPropertyCreation();
+        CreateProperties();
+        WeaveState();
     }
 
     void BuildMethodNodes()
@@ -60,8 +61,10 @@ public partial class ModuleWeaver
                 nodes.Add(methodNode);
             }
         }
+    }
 
-        // cleanup new requested properties for duplicates
+    void TrimPropertyCreation()
+    {
         var lookup = nodes.Where(x => x.AddProperty)
                           .ToLookup(x => x.StatePropertyName);
 
@@ -84,8 +87,10 @@ public partial class ModuleWeaver
                 }
             }
         }
+    }
 
-        // create backing properties where required
+    void CreateProperties()
+    {
         foreach (var node in nodes)
         {
             if (node.AddProperty)
@@ -97,7 +102,10 @@ public partial class ModuleWeaver
                 }
             }
         }
+    }
 
+    void WeaveState()
+    {
         // apply state pattern to methods
         foreach (var node in nodes)
         {
