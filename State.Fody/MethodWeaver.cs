@@ -41,6 +41,26 @@ public partial class ModuleWeaver
     {
         var asyncType = asyncStateMachine.ConstructorArguments[0].Value as TypeReference;
         var asyncTypeDefinition = asyncType.Resolve();
+
+        // validate if there is a 'this' field
+        // create it ourselves if it wasn't made yet
+        var thisField = asyncTypeDefinition.Fields.FirstOrDefault(x => x.FieldType == node.TypeDefinition);
+        if (thisField == null)
+        {
+            thisField = new FieldDefinition($"<>4__this", FieldAttributes.Public, node.TypeDefinition);
+            asyncTypeDefinition.Fields.Add(thisField);
+
+            var baseProcessor = node.MethodDefinition.Body.GetILProcessor();
+            var firstInstruction = node.MethodDefinition.Body.Instructions.First();
+            var setFieldInstructions = new List<Instruction>()
+            {
+                Instruction.Create(OpCodes.Ldloca, node.MethodDefinition.Body.Variables.First()),
+                Instruction.Create(OpCodes.Ldarg_0),
+                Instruction.Create(OpCodes.Stfld, thisField)
+            };
+            baseProcessor.InsertBefore(firstInstruction, setFieldInstructions);
+        }
+
         var asyncTypeMethod = asyncTypeDefinition.Methods.Get("MoveNext");
 
         if (asyncTypeMethod == null)
@@ -49,12 +69,13 @@ public partial class ModuleWeaver
             return;
         }
 
+        asyncTypeMethod.Body.SimplifyMacros();
+
         var methodBodyFirstInstruction = GetMethodFirstInstruction(asyncTypeMethod);
         var methodBodyReturnInstruction = asyncTypeMethod.Body.Instructions.FirstOrDefault(x => x.OpCode == OpCodes.Ret);
         var tryCatchLeaveInstructions = GetTryCatchLeaveInstructions(methodBodyReturnInstruction);
 
         var stateField = asyncTypeDefinition.Fields.FirstOrDefault(x => x.FieldType == ModuleDefinition.TypeSystem.Int32);
-        var thisField = asyncTypeDefinition.Fields.FirstOrDefault(x => x.FieldType == node.TypeDefinition);
         var nopInstruction = Instruction.Create(OpCodes.Nop);
         // We need to check on state to avoid changing state when execution isn't finished
         var finalInstructions = new List<Instruction>()
@@ -84,6 +105,8 @@ public partial class ModuleWeaver
 
         asyncTypeMethod.Body.ExceptionHandlers.Add(handler);
         asyncTypeMethod.Body.InitLocals = true;
+
+        asyncTypeMethod.Body.OptimizeMacros();
     }
 
     /// <summary>
