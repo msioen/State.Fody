@@ -4,7 +4,7 @@
 
 This add-in adds an attribute which will update a boolean state during method execution. It's set to true while the method executes and resets to false once the method returns.
 
-https://michielsioen.be/2017-10-21-il-weaving/
+Some background info and details can be foun on [my blog](https://michielsioen.be/2017-10-21-il-weaving/)
 
 ### Your code
 ```c#
