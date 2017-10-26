@@ -53,5 +53,14 @@ namespace AssemblyToProcess
 
             IsLoading2 = false;
         }
+
+        [AddState("IsLoading")]
+        public async Task Multiple()
+        {
+            await TestAsync1();
+            var two = await TestAsync2();
+            var three = await TestAsync3(two);
+            await TestAsync4();
+        }
     }
 }

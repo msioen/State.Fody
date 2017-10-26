@@ -51,42 +51,42 @@ public Task<int> TestAsync3 (int input)
 }
 
 void IAsyncStateMachine.MoveNext ()
-	{
-		this.<>4__this.IsTesting = true;
+{
+	this.<>4__this.IsTesting = true;
+	try {
+		int num = this.<>1__state;
+		int result;
 		try {
-			int num = this.<>1__state;
-			int result;
-			try {
-				TaskAwaiter awaiter;
-				if (num != 0) {
-					awaiter = Task.Delay (100).GetAwaiter ();
-					if (!awaiter.IsCompleted) {
-						this.<>1__state = 0;
-						this.<>u__1 = awaiter;
-						this.<>t__builder.AwaitUnsafeOnCompleted<TaskAwaiter, Async.<TestAsync3>d__12> (ref awaiter, ref this);
-						return;
-					}
-				} else {
-					awaiter = this.<>u__1;
-					this.<>u__1 = default(TaskAwaiter);
-					this.<>1__state = -1;
-				}
-				awaiter.GetResult ();
-				Console.WriteLine ("TestAsync3");
-				result = this.input;
-			} catch (Exception exception) {
-				this.<>1__state = -2;
-				this.<>t__builder.SetException (exception);
-				return;
-			}
-			this.<>1__state = -2;
-			this.<>t__builder.SetResult (result);
-		} finally {
-			int num = this.<>1__state;
+			TaskAwaiter awaiter;
 			if (num != 0) {
-				this.<>4__this.IsTesting = false;
+				awaiter = Task.Delay (100).GetAwaiter ();
+				if (!awaiter.IsCompleted) {
+					this.<>1__state = 0;
+					this.<>u__1 = awaiter;
+					this.<>t__builder.AwaitUnsafeOnCompleted<TaskAwaiter, Async.<TestAsync3>d__12> (ref awaiter, ref this);
+					return;
+				}
+			} else {
+				awaiter = this.<>u__1;
+				this.<>u__1 = default(TaskAwaiter);
+				this.<>1__state = -1;
 			}
+			awaiter.GetResult ();
+			Console.WriteLine ("TestAsync3");
+			result = this.input;
+		} catch (Exception exception) {
+			this.<>1__state = -2;
+			this.<>t__builder.SetException (exception);
+			return;
+		}
+		this.<>1__state = -2;
+		this.<>t__builder.SetResult (result);
+	} finally {
+		int num = this.<>1__state;
+		if (num == -2) {
+			this.<>4__this.IsTesting = false;
 		}
 	}
+}
 
 ```

@@ -7,6 +7,9 @@ using Mono.Cecil.Rocks;
 
 public partial class ModuleWeaver
 {
+    //https://github.com/dotnet/roslyn/blob/d4dab355b96955aca5b4b0ebf6282575fad78ba8/src/Compilers/CSharp/Portable/Lowering/StateMachineRewriter/StateMachineStates.cs
+    const int FinishedStateMachine = -2;
+
     void AddStateToMethod(MethodNode node)
     {
         var methodDefinition = node.MethodDefinition;
@@ -42,8 +45,9 @@ public partial class ModuleWeaver
         var asyncType = asyncStateMachine.ConstructorArguments[0].Value as TypeReference;
         var asyncTypeDefinition = asyncType.Resolve();
 
-        // validate if there is a 'this' field
-        // create it ourselves if it wasn't made yet
+        // validate if there is a 'this' field => create it ourselves if it wasn't made yet
+        // reference on why this might not exist: 
+        // https://github.com/dotnet/roslyn/blob/version-2.4.0/src/Compilers/CSharp/Portable/Lowering/StateMachineRewriter/MethodToStateMachineRewriter.cs#L47-L59
         var thisField = asyncTypeDefinition.Fields.FirstOrDefault(x => x.FieldType == node.TypeDefinition);
         if (thisField == null)
         {
@@ -82,9 +86,8 @@ public partial class ModuleWeaver
         {
             Instruction.Create(OpCodes.Ldarg_0),
             Instruction.Create(OpCodes.Ldfld, stateField),
-            Instruction.Create(OpCodes.Stloc_0),
-            Instruction.Create(OpCodes.Ldloc_0),
-            Instruction.Create(OpCodes.Brfalse_S, nopInstruction)
+            Instruction.Create(OpCodes.Ldc_I4, FinishedStateMachine),
+            Instruction.Create(OpCodes.Bne_Un_S, nopInstruction)
         };
         finalInstructions.AddRange(GetSetterStateInstructions(node, 0, thisField));
         finalInstructions.Add(Instruction.Create(OpCodes.Endfinally));
