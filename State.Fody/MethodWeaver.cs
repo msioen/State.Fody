@@ -92,8 +92,17 @@ public partial class ModuleWeaver
         finalInstructions.AddRange(GetSetterStateInstructions(node, 0, thisField));
         finalInstructions.Add(Instruction.Create(OpCodes.Endfinally));
 
+        var initialInstructions = new List<Instruction>()
+        {
+            Instruction.Create(OpCodes.Ldarg_0),
+            Instruction.Create(OpCodes.Ldfld, stateField),
+            Instruction.Create(OpCodes.Ldc_I4, 0),
+            Instruction.Create(OpCodes.Bne_Un_S, methodBodyFirstInstruction),
+        };
+        initialInstructions.AddRange(GetSetterStateInstructions(node, 1, thisField));
+
         var processor = asyncTypeMethod.Body.GetILProcessor();
-        processor.InsertBefore(methodBodyFirstInstruction, GetSetterStateInstructions(node, 1, thisField));
+        processor.InsertBefore(methodBodyFirstInstruction, initialInstructions);
         processor.InsertBefore(methodBodyReturnInstruction, tryCatchLeaveInstructions);
         processor.InsertBefore(methodBodyReturnInstruction, finalInstructions);
         processor.InsertBefore(methodBodyReturnInstruction, nopInstruction);

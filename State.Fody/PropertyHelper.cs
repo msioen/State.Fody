@@ -17,15 +17,15 @@ public partial class ModuleWeaver
         }
         else if (propertyDefinition.PropertyType.FullName != ModuleDefinition.TypeSystem.Boolean.FullName)
         {
-            throw new WeavingException($"AddState property {statePropertyName} for method {method.Name} should be of type Bool");
+            throw new WeavingException(EWeavingError.InvalidPropertyType, $"AddState property {statePropertyName} for method {method.Name} should be of type Bool");
         }
         else if (propertyDefinition.SetMethod == null)
         {
-            throw new WeavingException($"Properties without setters are not supported");
+            throw new WeavingException(EWeavingError.InvalidPropertySetter, $"Properties without setters are not supported");
         }
         else if (method.IsStatic && !propertyDefinition.SetMethod.IsStatic)
         {
-            throw new WeavingException($"Non-static property states for static methods are not supported");
+            throw new WeavingException(EWeavingError.InstancePropertyWithStaticMethod, $"Non-static property states for static methods are not supported");
         }
 
         methodNode.PropertyReference = propertyDefinition.SetMethod;
@@ -43,11 +43,11 @@ public partial class ModuleWeaver
         }
         else if (fieldDefinition.FieldType.FullName != ModuleDefinition.TypeSystem.Boolean.FullName)
         {
-            throw new WeavingException($"AddState field {statePropertyName} for method {method.Name} should be of type Bool");
+            throw new WeavingException(EWeavingError.InvalidPropertyType, $"AddState field {statePropertyName} for method {method.Name} should be of type Bool");
         }
         else if (method.IsStatic && !fieldDefinition.IsStatic)
         {
-            throw new WeavingException($"Non-static field states for static methods are not supported");
+            throw new WeavingException(EWeavingError.InstanceFieldWithStaticMethod, $"Non-static field states for static methods are not supported");
         }
 
         methodNode.FieldReference = fieldDefinition;
