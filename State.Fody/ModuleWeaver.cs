@@ -79,14 +79,27 @@ public partial class ModuleWeaver
 
                     if (node.TypeDefinition.IsAssignableFrom(nodeSecondPass.TypeDefinition))
                     {
-                        nodeSecondPass.AddProperty = false;
-                        node.AddProperty = true;
-                        node.LinkedNodes.Add(nodeSecondPass);
-                        node.LinkedNodes.AddRange(nodeSecondPass.LinkedNodes);
+                        if (node.MethodDefinition.IsStatic != nodeSecondPass.MethodDefinition.IsStatic &&
+                           nodeSecondPass.MethodDefinition.IsStatic)
+                        {
+                            MergeNodeCreation(nodeSecondPass, node);
+                        }
+                        else
+                        {
+                            MergeNodeCreation(node, nodeSecondPass);
+                        }
                     }
                 }
             }
         }
+    }
+
+    static void MergeNodeCreation(MethodNode node, MethodNode nodeToMerge)
+    {
+        nodeToMerge.AddProperty = false;
+        node.AddProperty = true;
+        node.LinkedNodes.Add(nodeToMerge);
+        node.LinkedNodes.AddRange(nodeToMerge.LinkedNodes);
     }
 
     void CreateProperties()
@@ -95,7 +108,7 @@ public partial class ModuleWeaver
         {
             if (node.AddProperty)
             {
-                node.PropertyReference = CreateProperty(node.TypeDefinition, node.StatePropertyName).SetMethod;
+                node.PropertyReference = CreateProperty(node.TypeDefinition, node.StatePropertyName, node.MethodDefinition.IsStatic).SetMethod;
                 foreach (var linkedNode in node.LinkedNodes)
                 {
                     linkedNode.PropertyReference = node.PropertyReference;

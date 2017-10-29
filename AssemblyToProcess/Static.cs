@@ -3,32 +3,38 @@ using State.Fody;
 
 namespace AssemblyToProcess
 {
-    public class Default
+    public class Static
     {
-        bool _isSyncing;
+        static bool _isSyncing;
 
-        public bool IsLoading { get; set; }
+        public static bool IsLoading { get; set; }
 
         [AddState("_isSyncing")]
-        public void TestField()
+        public static void TestField()
         {
             Console.WriteLine("TestField");
         }
 
         [AddState("IsLoading")]
-        public void TestProperty()
+        public static void TestProperty()
         {
             Console.WriteLine("TestProperty");
         }
 
         [AddState("IsTesting")]
-        public void TestNewProperty()
+        public void TestNewPropertyInstance()
         {
             Console.WriteLine("TestNewProperty");
         }
 
         [AddState("IsTesting")]
-        public void TestMultiple()
+        public static void TestNewProperty()
+        {
+            Console.WriteLine("TestNewProperty");
+        }
+
+        [AddState("IsTesting")]
+        public static void TestMultiple()
         {
             TestField();
             TestProperty();

@@ -10,6 +10,6 @@ public class MethodNode
     public string StatePropertyName;
     public bool AddProperty;
 
-    public FieldReference FieldReference;
-    public MethodReference PropertyReference;
+    public FieldDefinition FieldReference;
+    public MethodDefinition PropertyReference;
 }

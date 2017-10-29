@@ -43,7 +43,7 @@ public partial class ModuleWeaver
     void AddStateToAsyncMethod(MethodNode node, CustomAttribute asyncStateMachine)
     {
         var asyncType = asyncStateMachine.ConstructorArguments[0].Value as TypeReference;
-        var asyncTypeDefinition = asyncType.Resolve();
+        var asyncTypeDefinition = Resolve(asyncType);
 
         // validate if there is a 'this' field => create it ourselves if it wasn't made yet
         // reference on why this might not exist: 
@@ -201,18 +201,24 @@ public partial class ModuleWeaver
 
     List<Instruction> GetSetterStateInstructions(MethodNode methodNode, int value, FieldDefinition targetField = null)
     {
-        var setterList = new List<Instruction>
+        var setterList = new List<Instruction>();
+        var isStatic = methodNode.PropertyReference?.IsStatic ?? methodNode.FieldReference?.IsStatic ?? false;
+        if (!isStatic)
         {
-            Instruction.Create(OpCodes.Ldarg_0)
-        };
-        if (targetField != null)
-        {
-            setterList.Add(Instruction.Create(OpCodes.Ldfld, targetField));
+            setterList.Add(Instruction.Create(OpCodes.Ldarg_0));
+            if (targetField != null)
+            {
+                setterList.Add(Instruction.Create(OpCodes.Ldfld, targetField));
+            }
         }
         setterList.Add(Instruction.Create(OpCodes.Ldc_I4, value));
         if (methodNode.PropertyReference != null)
         {
             setterList.Add(Instruction.Create(OpCodes.Call, methodNode.PropertyReference));
+        }
+        else if (isStatic)
+        {
+            setterList.Add(Instruction.Create(OpCodes.Stsfld, methodNode.FieldReference));
         }
         else
         {

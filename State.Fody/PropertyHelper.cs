@@ -23,6 +23,10 @@ public partial class ModuleWeaver
         {
             throw new WeavingException($"Properties without setters are not supported");
         }
+        else if (method.IsStatic && !propertyDefinition.SetMethod.IsStatic)
+        {
+            throw new WeavingException($"Non-static property states for static methods are not supported");
+        }
 
         methodNode.PropertyReference = propertyDefinition.SetMethod;
         return true;
@@ -41,22 +45,29 @@ public partial class ModuleWeaver
         {
             throw new WeavingException($"AddState field {statePropertyName} for method {method.Name} should be of type Bool");
         }
+        else if (method.IsStatic && !fieldDefinition.IsStatic)
+        {
+            throw new WeavingException($"Non-static field states for static methods are not supported");
+        }
 
         methodNode.FieldReference = fieldDefinition;
         return true;
     }
 
-    PropertyDefinition CreateProperty(TypeDefinition typeDefinition, string statePropertyName)
+    PropertyDefinition CreateProperty(TypeDefinition typeDefinition, string statePropertyName, bool isStatic)
     {
         PropertyDefinition propertyDefinition;
         var propertyType = ModuleDefinition.TypeSystem.Boolean;
         var voidType = ModuleDefinition.TypeSystem.Void;
 
         // create backing field
-        var fieldDefinition = new FieldDefinition($"<{statePropertyName}>k_BackingField", FieldAttributes.Private, propertyType);
+        var fieldDefinition = new FieldDefinition($"<{statePropertyName}>k_BackingField", FieldAttributes.Private, propertyType)
+        {
+            IsStatic = isStatic
+        };
         typeDefinition.Fields.Add(fieldDefinition);
 
-        var parameterDefinition = new ParameterDefinition(propertyType);
+        var parameterDefinition = new ParameterDefinition("value", ParameterAttributes.None, propertyType);
 
         // create property
         var attributes = MethodAttributes.FamANDAssem | MethodAttributes.Family | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
@@ -64,24 +75,43 @@ public partial class ModuleWeaver
         var getMethod = new MethodDefinition("get_" + statePropertyName, attributes, propertyType)
         {
             IsGetter = true,
-            SemanticsAttributes = MethodSemanticsAttributes.Getter
+            SemanticsAttributes = MethodSemanticsAttributes.Getter,
+            IsStatic = isStatic,
+            HasThis = !isStatic
         };
         var setMethod = new MethodDefinition("set_" + statePropertyName, attributes, voidType)
         {
             IsSetter = true,
-            SemanticsAttributes = MethodSemanticsAttributes.Setter
+            SemanticsAttributes = MethodSemanticsAttributes.Setter,
+            IsStatic = isStatic,
+            HasThis = !isStatic
         };
         setMethod.Parameters.Add(parameterDefinition);
 
         var getter = getMethod.Body.GetILProcessor();
-        getter.Emit(OpCodes.Ldarg_0);
-        getter.Emit(OpCodes.Ldfld, fieldDefinition);
+        if (isStatic)
+        {
+            getter.Emit(OpCodes.Ldsfld, fieldDefinition);
+        }
+        else
+        {
+            getter.Emit(OpCodes.Ldarg_0);
+            getter.Emit(OpCodes.Ldfld, fieldDefinition);
+        }
         getter.Emit(OpCodes.Ret);
 
         var setter = setMethod.Body.GetILProcessor();
-        setter.Emit(OpCodes.Ldarg_0);
-        setter.Emit(OpCodes.Ldarg, parameterDefinition);
-        setter.Emit(OpCodes.Stfld, fieldDefinition);
+        if (isStatic)
+        {
+            setter.Emit(OpCodes.Ldarg, parameterDefinition);
+            setter.Emit(OpCodes.Stsfld, fieldDefinition);
+        }
+        else
+        {
+            setter.Emit(OpCodes.Ldarg_0);
+            setter.Emit(OpCodes.Ldarg, parameterDefinition);
+            setter.Emit(OpCodes.Stfld, fieldDefinition);
+        }
         setter.Emit(OpCodes.Ret);
 
         typeDefinition.Methods.Add(getMethod);
@@ -89,7 +119,7 @@ public partial class ModuleWeaver
 
         propertyDefinition = new PropertyDefinition(statePropertyName, PropertyAttributes.None, propertyType)
         {
-            HasThis = true,
+            HasThis = !isStatic,
             GetMethod = getMethod,
             SetMethod = setMethod
         };
