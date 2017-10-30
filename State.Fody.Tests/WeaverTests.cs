@@ -12,24 +12,21 @@ using State.Fody;
 public class WeaverTests
 {
     Assembly assembly;
+    string newAssemblyPath;
+    string assemblyPath;
 
     [OneTimeSetUp]
     public void Setup()
     {
-        var projectPath = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, @"../../../AssemblyToProcess/bin/Debug/"));
-        var assemblyPath = Path.Combine(Path.GetDirectoryName(projectPath), @"AssemblyToProcess.dll");
-#if (!DEBUG)
-            assemblyPath = assemblyPath.Replace("Debug", "Release");
-#endif
-
-        var newAssemblyPath = WeaveAssembly(assemblyPath, false);
+        assemblyPath = GetAssemblyPath("AssemblyToProcess");
+        newAssemblyPath = WeaveAssembly(assemblyPath);
         assembly = Assembly.LoadFile(newAssemblyPath);
     }
 
     [Test]
     public void TestValidity()
     {
-        //Verifier.Verify(assemblyPath, newAssemblyPath);
+        Verifier.Verify(assemblyPath, newAssemblyPath);
     }
 
     [Test]
@@ -99,26 +96,27 @@ public class WeaverTests
     }
 
     [Test]
-    public void TestInvalidPropertyType()
+    public void TestInvalidPropertySetter()
     {
-        var inputAssembly = CreateAssemblyForFile("FailingAssemblyFiles", "InvalidPropertyType");
-        var exception = Assert.Throws<WeavingException>(() => WeaveAssembly(inputAssembly.Location, true));
-        Assert.AreEqual(EWeavingError.InvalidPropertyType, exception.Error);
+        // due to C#6 usage not possible to use the default CodeDomProvider here
+        var inputPath = GetAssemblyPath("InvalidPropertySetter");
+        var exception = Assert.Throws<WeavingException>(() => WeaveAssembly(inputPath));
+        Assert.AreEqual(EWeavingError.InvalidPropertySetter, exception.Error);
     }
 
     [Test]
-    public void TestInvalidPropertySetter()
+    public void TestInvalidPropertyType()
     {
-        var inputAssembly = CreateAssemblyForFile("FailingAssemblyFiles", "InvalidPropertySetter");
-        var exception = Assert.Throws<WeavingException>(() => WeaveAssembly(inputAssembly.Location, true));
-        Assert.AreEqual(EWeavingError.InvalidPropertySetter, exception.Error);
+        var inputAssembly = CreateAssemblyForFile("FailingAssemblyFiles", "InvalidPropertyType");
+        var exception = Assert.Throws<WeavingException>(() => WeaveAssembly(inputAssembly.Location));
+        Assert.AreEqual(EWeavingError.InvalidPropertyType, exception.Error);
     }
 
     [Test]
     public void TestInvalidInstancePropertyInStaticMethod()
     {
         var inputAssembly = CreateAssemblyForFile("FailingAssemblyFiles", "InvalidInstancePropertyInStaticMethod");
-        var exception = Assert.Throws<WeavingException>(() => WeaveAssembly(inputAssembly.Location, true));
+        var exception = Assert.Throws<WeavingException>(() => WeaveAssembly(inputAssembly.Location));
         Assert.AreEqual(EWeavingError.InstancePropertyWithStaticMethod, exception.Error);
     }
 
@@ -126,20 +124,26 @@ public class WeaverTests
     public void TestInvalidInstanceFieldInStaticMethod()
     {
         var inputAssembly = CreateAssemblyForFile("FailingAssemblyFiles", "InvalidInstanceFieldInStaticMethod");
-        var exception = Assert.Throws<WeavingException>(() => WeaveAssembly(inputAssembly.Location, true));
+        var exception = Assert.Throws<WeavingException>(() => WeaveAssembly(inputAssembly.Location));
         Assert.AreEqual(EWeavingError.InstanceFieldWithStaticMethod, exception.Error);
     }
 
-    string WeaveAssembly(string inputPath, bool readWrite)
+    string GetAssemblyPath(string assemblyName)
     {
-        string outputPath = inputPath;
-        if (!readWrite)
-        {
-            outputPath = inputPath.Replace(".dll", "2.dll");
-            File.Copy(inputPath, outputPath, true);
-        }
+        var projectPath = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, $@"../../../{assemblyName}/bin/Debug/"));
+        var asPath = Path.Combine(Path.GetDirectoryName(projectPath), $@"{assemblyName}.dll");
+#if (!DEBUG)
+            asPath = asPath.Replace("Debug", "Release");
+#endif
+        return asPath;
+    }
 
-        using (var moduleDefinition = ModuleDefinition.ReadModule(inputPath, new ReaderParameters() { ReadWrite = readWrite }))
+    string WeaveAssembly(string inputPath)
+    {
+        string outputPath = inputPath.Replace(".dll", "2.dll");
+        File.Copy(inputPath, outputPath, true);
+
+        using (var moduleDefinition = ModuleDefinition.ReadModule(inputPath))
         {
             var weavingTask = new ModuleWeaver
             {
@@ -151,10 +155,7 @@ public class WeaverTests
             weavingTask.LogError = Log;
 
             weavingTask.Execute();
-            if (readWrite)
-                moduleDefinition.Write();
-            else
-                moduleDefinition.Write(outputPath);
+            moduleDefinition.Write(outputPath);
         }
 
         return outputPath;
@@ -180,9 +181,9 @@ public class WeaverTests
         compilerParams.GenerateExecutable = false;
         compilerParams.GenerateInMemory = false;
         compilerParams.OutputAssembly = outputPath;
-        compilerParams.TempFiles = new TempFileCollection(".", false);
+        compilerParams.TempFiles = new TempFileCollection(Path.GetTempPath(), false);
         compilerParams.ReferencedAssemblies.Add(typeof(AddStateAttribute).Assembly.Location);
-
+        
         using (var provider = CodeDomProvider.CreateProvider(CodeDomProvider.GetLanguageFromExtension(".cs")))
         {
             var results = provider.CompileAssemblyFromFile(compilerParams, inputPath);
