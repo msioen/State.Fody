@@ -40,6 +40,7 @@
     <Compile Include="PropertyWithoutSetter.cs" />
     <Compile Include="ExistingClauses.cs" />
     <Compile Include="Static.cs" />
+    <Compile Include="StateChange.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\State.Fody\State.Fody.csproj">
