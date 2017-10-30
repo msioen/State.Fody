@@ -1,3 +1,5 @@
+[![NuGet Status](http://img.shields.io/nuget/v/State.Fody.svg?style=flat)](https://www.nuget.org/packages/State.Fody/)
+
 ## This is an add-in for [Fody](https://github.com/Fody/Fody/)
 
 [Introduction to Fody](http://github.com/Fody/Fody/wiki/SampleUsage)
@@ -52,7 +54,9 @@ public Task<int> TestAsync3 (int input)
 
 void IAsyncStateMachine.MoveNext ()
 {
-	this.<>4__this.IsTesting = true;
+  if (this.<>1__state == 0) {
+	  this.<>4__this.IsTesting = true;
+  }
 	try {
 		int num = this.<>1__state;
 		int result;
@@ -82,8 +86,7 @@ void IAsyncStateMachine.MoveNext ()
 		this.<>1__state = -2;
 		this.<>t__builder.SetResult (result);
 	} finally {
-		int num = this.<>1__state;
-		if (num == -2) {
+		if (this.<>1__state == -2) {
 			this.<>4__this.IsTesting = false;
 		}
 	}
