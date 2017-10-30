@@ -13,13 +13,22 @@ public static class Verifier
 
     static Verifier()
     {
-        var sdkPath = Path.GetFullPath(Path.Combine(ToolLocationHelper.GetPathToDotNetFrameworkSdk(TargetDotNetFrameworkVersion.VersionLatest), "..\\.."));
-        exePath = Directory.GetFiles(sdkPath, "peverify.exe", SearchOption.AllDirectories).LastOrDefault();
-
-        peverifyFound = File.Exists(exePath);
-        if (!peverifyFound)
+        try
         {
-#if(!DEBUG)
+            var sdkPath = Path.GetFullPath(Path.Combine(ToolLocationHelper.GetPathToDotNetFrameworkSdk(TargetDotNetFrameworkVersion.VersionLatest), "..\\.."));
+            exePath = Directory.GetFiles(sdkPath, "peverify.exe", SearchOption.AllDirectories).LastOrDefault();
+
+            peverifyFound = File.Exists(exePath);
+            if (!peverifyFound)
+            {
+#if (!DEBUG)
+                throw new System.Exception("Could not find PEVerify");
+#endif
+            }
+        }
+        catch (TypeInitializationException)
+        {
+#if (!DEBUG)
             throw new System.Exception("Could not find PEVerify");
 #endif
         }
