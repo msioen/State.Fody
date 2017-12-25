@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Linq;
 using Mono.Cecil;
 
 public partial class ModuleWeaver
@@ -8,11 +9,16 @@ public partial class ModuleWeaver
     List<TypeDefinition> allClasses;
     List<MethodNode> nodes;
 
+    public XElement Config { get; set; }
+
     public Action<string> LogError { get; set; }
     public Action<string> LogInfo { get; set; }
     public Action<string> LogDebug { get; set; }
 
     public ModuleDefinition ModuleDefinition { get; set; }
+
+    MethodReference _countersAddReference;
+    MethodReference _countersRemoveReference;
 
     public ModuleWeaver()
     {
@@ -23,6 +29,7 @@ public partial class ModuleWeaver
 
     public void Execute()
     {
+        ResolveConfig();
         BuildMethodNodes();
         TrimPropertyCreation();
         CreateProperties();
@@ -114,6 +121,16 @@ public partial class ModuleWeaver
                     linkedNode.PropertyReference = node.PropertyReference;
                 }
             }
+        }
+
+        if (CountNestedStateChanges)
+        {
+            _countersAddReference = ModuleDefinition
+                .ImportReference(typeof(State.Fody.StateCounters)
+                                 .GetMethod(nameof(State.Fody.StateCounters.AddLoading)));
+            _countersRemoveReference = ModuleDefinition
+                .ImportReference(typeof(State.Fody.StateCounters)
+                                 .GetMethod(nameof(State.Fody.StateCounters.RemoveLoading)));
         }
     }
 

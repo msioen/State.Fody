@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "State.Fody.Tests", "State.F
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nuget", "Nuget\Nuget.csproj", "{4063C150-9DE0-4E65-A124-824A4FC25A5B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "State", "State\State.csproj", "{1ECC6322-572A-4366-8E48-B0ABA5D92539}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,6 +27,10 @@ Global
 		{4063C150-9DE0-4E65-A124-824A4FC25A5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4063C150-9DE0-4E65-A124-824A4FC25A5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4063C150-9DE0-4E65-A124-824A4FC25A5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1ECC6322-572A-4366-8E48-B0ABA5D92539}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1ECC6322-572A-4366-8E48-B0ABA5D92539}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1ECC6322-572A-4366-8E48-B0ABA5D92539}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1ECC6322-572A-4366-8E48-B0ABA5D92539}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

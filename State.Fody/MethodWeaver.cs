@@ -210,7 +210,7 @@ public partial class ModuleWeaver
     List<Instruction> GetSetterStateInstructions(MethodNode methodNode, int value, FieldDefinition targetField = null)
     {
         var setterList = new List<Instruction>();
-        var isStatic = methodNode.PropertyReference?.IsStatic ?? methodNode.FieldReference?.IsStatic ?? false;
+        var isStatic = (methodNode.PropertyReference?.IsStatic ?? methodNode.FieldReference?.IsStatic ?? false);
         if (!isStatic)
         {
             setterList.Add(Instruction.Create(OpCodes.Ldarg_0));
@@ -219,7 +219,15 @@ public partial class ModuleWeaver
                 setterList.Add(Instruction.Create(OpCodes.Ldfld, targetField));
             }
         }
-        setterList.Add(Instruction.Create(OpCodes.Ldc_I4, value));
+        if (CountNestedStateChanges)
+        {
+            setterList.Add(Instruction.Create(OpCodes.Ldstr, methodNode.PropertyReference?.FullName ?? methodNode.FieldReference.FullName));
+            setterList.Add(Instruction.Create(OpCodes.Call, value > 0 ? _countersAddReference : _countersRemoveReference));
+        }
+        else
+        {
+            setterList.Add(Instruction.Create(OpCodes.Ldc_I4, value));
+        }
         if (methodNode.PropertyReference != null)
         {
             setterList.Add(Instruction.Create(OpCodes.Call, methodNode.PropertyReference));

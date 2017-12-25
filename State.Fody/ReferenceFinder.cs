@@ -16,7 +16,6 @@ public class ReferenceFinder
 
     public TypeReference GetTypeReference(Type type)
     {
-
         if (type.Assembly.GetName().Name == "mscorlib")
         {
             var typeReference = mscorlib.Types.FirstOrDefault(tr => tr.Namespace == type.Namespace && tr.Name == type.Name);

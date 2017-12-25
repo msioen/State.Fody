@@ -167,6 +167,10 @@
     <Compile Include="ValidAssemblyFiles\StateChange.cs" />
     <Compile Include="ValidAssemblyFiles\Static.cs" />
     <Compile Include="ValidAssemblyFiles\Untouched.cs" />
+    <Compile Include="ValidAssemblyFiles\Nested.cs" />
+    <Compile Include="InvalidScenarioTests.cs" />
+    <Compile Include="StateCountersTests.cs" />
+    <Compile Include="TestHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -175,6 +179,10 @@
     <ProjectReference Include="..\State.Fody\State.Fody.csproj">
       <Project>{B2BD8928-7764-4C8F-9B75-0E1E2ECA7936}</Project>
       <Name>State.Fody</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\State\State.csproj">
+      <Project>{1ECC6322-572A-4366-8E48-B0ABA5D92539}</Project>
+      <Name>State</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

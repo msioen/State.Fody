@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 
 [TestFixture]
-public class WeaverTests
+public class StateCountersTests
 {
     Assembly assembly;
     string newAssemblyPath;
@@ -19,11 +19,11 @@ public class WeaverTests
         var strippedFileNames = validFileNames.Select(x => Path.GetFileName(x)).ToArray();
 
         assemblyPath = TestHelper.CreateAssemblyForFiles(
-            outputAssembly: "AssemblyToProcess",
+            outputAssembly: "AssemblyToProcessWithCounters",
             inputFolder: "ValidAssemblyFiles",
             inputFilenames: strippedFileNames);
 
-        newAssemblyPath = TestHelper.WeaveAssembly(assemblyPath, "2", null);
+        newAssemblyPath = TestHelper.WeaveAssembly(assemblyPath, "2", "<PropertyChanged CountNestedStateChanges='true'/>");
         assembly = Assembly.LoadFile(newAssemblyPath);
     }
 
@@ -34,44 +34,11 @@ public class WeaverTests
     }
 
     [Test]
-    public void TestPropertyCreation()
-    {
-        var instance = TestHelper.GetInstance(assembly, "Default");
-        var type = (Type)instance.GetType();
-        var properties = type.GetProperties();
-        Assert.AreEqual(2, properties.Length);
-        Assert.IsTrue(properties.FirstOrDefault(x => x.Name == "IsTesting") != null);
-    }
-
-    [Test]
-    public void TestPropertyCreationInheritance()
-    {
-        var baseInstance = TestHelper.GetInstance(assembly, "BaseClass");
-        var baseType = (Type)baseInstance.GetType();
-        var baseProperties = baseType.GetProperties();
-        Assert.AreEqual(2, baseProperties.Length);
-
-        var subInstance = TestHelper.GetInstance(assembly, "SubClass");
-        var subType = (Type)subInstance.GetType();
-        var subProperties = subType.GetProperties();
-        Assert.AreEqual(4, subProperties.Length);
-    }
-
-    [Test]
     public void TestStateChange()
     {
         var instance = TestHelper.GetInstance(assembly, "StateChange");
         Assert.AreEqual(0, instance.SetterCounter);
         instance.Test();
-        Assert.AreEqual(2, instance.SetterCounter);
-    }
-
-    [Test]
-    public void TestStateChangeSubcalls()
-    {
-        var instance = TestHelper.GetInstance(assembly, "StateChange");
-        Assert.AreEqual(0, instance.SetterCounter);
-        instance.TestSubcalls();
         Assert.AreEqual(2, instance.SetterCounter);
     }
 
@@ -105,6 +72,6 @@ public class WeaverTests
         var instance = TestHelper.GetInstance(assembly, "Nested");
         Assert.AreEqual(0, instance.SetterCounter);
         instance.Test();
-        Assert.AreEqual(4, instance.SetterCounter);
+        Assert.AreEqual(2, instance.SetterCounter);
     }
 }
