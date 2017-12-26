@@ -13,8 +13,8 @@
     <Delete Files="@(FilesToDelete)" />
     <MakeDir Directories="$(SolutionDir)NuGetBuild" />
     <Copy SourceFiles="$(SolutionDir)State.Fody\bin\$(Configuration)\net452\State.Fody.dll" DestinationFolder="$(SolutionDir)NuGetBuild" />
-    <Copy SourceFiles="$(SolutionDir)State.Fody\bin\$(Configuration)\net452\State.Fody.dll" DestinationFolder="$(SolutionDir)NuGetBuild\lib\net452" />
-    <Copy SourceFiles="$(SolutionDir)State.Fody\bin\$(Configuration)\net452\State.Fody.pdb" DestinationFolder="$(SolutionDir)NuGetBuild\lib\net452" />
+    <Copy SourceFiles="$(SolutionDir)State\bin\$(Configuration)\net452\State.dll" DestinationFolder="$(SolutionDir)NuGetBuild\lib\net452" />
+    <Copy SourceFiles="$(SolutionDir)State\bin\$(Configuration)\net452\State.pdb" DestinationFolder="$(SolutionDir)NuGetBuild\lib\net452" />
     <Copy SourceFiles="$(SolutionDir)NuGet\State.Fody.nuspec" DestinationFolder="$(SolutionDir)NuGetBuild" />
     <Copy SourceFiles="$(ProjectDir)install.ps" DestinationFiles="$(SolutionDir)NuGetBuild\tools\install.ps1" />
     <Copy SourceFiles="$(ProjectDir)uninstall.ps" DestinationFiles="$(SolutionDir)NuGetBuild\tools\uninstall.ps1" />

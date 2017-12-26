@@ -57,4 +57,30 @@ public class Untouched
             _backingField = false;
         }
     }
+
+    public void Counters()
+    {
+        Prop = State.Fody.StateCounters.AddLoading("PropertyName");
+        try
+        {
+            Console.WriteLine("counters");
+        }
+        finally
+        {
+            Prop = State.Fody.StateCounters.RemoveLoading("PropertyName");
+        }
+    }
+
+    public static void Counters2()
+    {
+        SProp = State.Fody.StateCounters.AddLoading("PropertyName");
+        try
+        {
+            Console.WriteLine("counters");
+        }
+        finally
+        {
+            SProp = State.Fody.StateCounters.RemoveLoading("PropertyName");
+        }
+    }
 }
