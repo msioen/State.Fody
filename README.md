@@ -1,4 +1,6 @@
 [![NuGet Status](http://img.shields.io/nuget/v/State.Fody.svg?style=flat)](https://www.nuget.org/packages/State.Fody/)
+[![Build status](https://ci.appveyor.com/api/projects/status/0989caao751b40v2/branch/master?svg=true)](https://ci.appveyor.com/project/msioen/state-fody/branch/master)
+
 
 ## This is an add-in for [Fody](https://github.com/Fody/Fody/)
 
