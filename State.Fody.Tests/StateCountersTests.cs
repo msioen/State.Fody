@@ -23,7 +23,7 @@ public class StateCountersTests
             inputFolder: "ValidAssemblyFiles",
             inputFilenames: strippedFileNames);
 
-        newAssemblyPath = TestHelper.WeaveAssembly(assemblyPath, "2", "<PropertyChanged CountNestedStateChanges='true'/>");
+        newAssemblyPath = TestHelper.WeaveAssembly(assemblyPath, "2", "<State CountNestedStateChanges='true'/>");
         assembly = Assembly.LoadFile(newAssemblyPath);
     }
 

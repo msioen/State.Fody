@@ -6,7 +6,12 @@
 
 This add-in adds an attribute which will update a boolean state during method execution. It's set to true while the method executes and resets to false once the method returns.
 
-Some background info and details can be foun on [my blog](https://michielsioen.be/2017-10-21-il-weaving/)
+Some background info and details can be found on [my blog](https://michielsioen.be/2017-10-21-il-weaving/)
+
+### Configuration options
+Name | Default value | Description
+--- | --- | ---
+CountNestedStateChanges | false | If enabled the passed property/field isn't just set to true/false but a 'counter' is used. If the propery can change in submethods as well this makes sure it will only be set to true/false over all nested methods instead of changing multiple times.
 
 ### Your code
 ```c#
