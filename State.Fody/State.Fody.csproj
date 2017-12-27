@@ -14,7 +14,7 @@
     <Compile Include="..\CommonAssemblyInfo.cs" />
   </ItemGroup>
   <Target Name="Merge" AfterTargets="AfterBuild">
-    <Exec Command="$(SolutionDir)/tools/ILRepack/tools/ILRepack.exe /out:$(SolutionDir)State.Fody\bin\$(Configuration)\net452\State.Fody.dll $(SolutionDir)State.Fody\bin\$(Configuration)\net452\State.Fody.dll $(SolutionDir)State.Fody\bin\$(Configuration)\net452\State.dll" />
+    <Exec Command="$(SolutionDir)/tools/ILRepack/tools/ILRepack.exe /out:$(SolutionDir)State.Fody\bin\$(Configuration)\$(TargetFramework)\State.Fody.dll $(SolutionDir)State.Fody\bin\$(Configuration)\$(TargetFramework)\State.Fody.dll $(SolutionDir)State.Fody\bin\$(Configuration)\$(TargetFramework)\State.dll" />
   </Target>
   <ItemGroup>
     <ProjectReference Include="..\State\State.csproj" />
