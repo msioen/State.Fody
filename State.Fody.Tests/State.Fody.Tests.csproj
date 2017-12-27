@@ -180,10 +180,6 @@
       <Project>{B2BD8928-7764-4C8F-9B75-0E1E2ECA7936}</Project>
       <Name>State.Fody</Name>
     </ProjectReference>
-    <ProjectReference Include="..\State\State.csproj">
-      <Project>{1ECC6322-572A-4366-8E48-B0ABA5D92539}</Project>
-      <Name>State</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="FailingAssemblyFiles\" />

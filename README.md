@@ -10,6 +10,11 @@ This add-in adds an attribute which will update a boolean state during method ex
 
 Some background info and details can be found on [my blog](https://michielsioen.be/2017-10-21-il-weaving/)
 
+To build the project locally execute following command in the repo:
+```
+nuget install -ExcludeVersion ILRepack -OutputDirectory tools
+```
+
 ### Configuration options
 Name | Default value | Description
 --- | --- | ---

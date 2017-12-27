@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net462</TargetFrameworks>
+    <TargetFrameworks>net452;netcoreapp2.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="PepitaPackage" Version="1.21.4" />
@@ -15,6 +15,8 @@
     <Copy SourceFiles="$(SolutionDir)State.Fody\bin\$(Configuration)\net452\State.Fody.dll" DestinationFolder="$(SolutionDir)NuGetBuild" />
     <Copy SourceFiles="$(SolutionDir)State\bin\$(Configuration)\net452\State.dll" DestinationFolder="$(SolutionDir)NuGetBuild\lib\net452" />
     <Copy SourceFiles="$(SolutionDir)State\bin\$(Configuration)\net452\State.pdb" DestinationFolder="$(SolutionDir)NuGetBuild\lib\net452" />
+    <Copy SourceFiles="$(SolutionDir)State\bin\$(Configuration)\netstandard1.0\State.dll" DestinationFolder="$(SolutionDir)NuGetBuild\lib\netstandard1.0" />
+    <Copy SourceFiles="$(SolutionDir)State\bin\$(Configuration)\netstandard1.0\State.pdb" DestinationFolder="$(SolutionDir)NuGetBuild\lib\netstandard1.0" />
     <Copy SourceFiles="$(SolutionDir)NuGet\State.Fody.nuspec" DestinationFolder="$(SolutionDir)NuGetBuild" />
     <Copy SourceFiles="$(ProjectDir)install.ps" DestinationFiles="$(SolutionDir)NuGetBuild\tools\install.ps1" />
     <Copy SourceFiles="$(ProjectDir)uninstall.ps" DestinationFiles="$(SolutionDir)NuGetBuild\tools\uninstall.ps1" />

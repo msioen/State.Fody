@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net452</TargetFrameworks>
+    <TargetFrameworks>net452;netcoreapp2.0</TargetFrameworks>
     <AssemblyName>State.Fody</AssemblyName>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -13,6 +13,9 @@
     <Reference Include="System.Xml.Linq" />
     <Compile Include="..\CommonAssemblyInfo.cs" />
   </ItemGroup>
+  <Target Name="Merge" AfterTargets="AfterBuild">
+    <Exec Command="$(SolutionDir)/tools/ILRepack/tools/ILRepack.exe /out:$(SolutionDir)State.Fody\bin\$(Configuration)\$(TargetFramework)\State.Fody.dll $(SolutionDir)State.Fody\bin\$(Configuration)\$(TargetFramework)\State.Fody.dll $(SolutionDir)State.Fody\bin\$(Configuration)\$(TargetFramework)\State.dll" />
+  </Target>
   <ItemGroup>
     <ProjectReference Include="..\State\State.csproj" />
   </ItemGroup>
