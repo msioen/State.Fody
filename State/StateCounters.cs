@@ -13,7 +13,6 @@ namespace State.Fody
             {
                 _counters.TryGetValue(name, out var currLoadingCount);
                 _counters[name] = currLoadingCount + 1;
-                Console.WriteLine("AddLoading " + name + " " + _counters[name]);
                 return _counters[name] > 0;
             }
         }
@@ -23,7 +22,6 @@ namespace State.Fody
             lock (_counters)
             {
                 _counters[name]--;
-                Console.WriteLine("RemoveLoading " + name + " " + _counters[name]);
                 return _counters[name] > 0;
             }
         }
